@@ -1,0 +1,27 @@
+{
+  "BTCUSDT": {
+    "rsi_buy": 35,
+    "rsi_sell": 65,
+    "min_volatility": 50
+  },
+  "ETHUSDT": {
+    "rsi_buy": 30,
+    "rsi_sell": 70,
+    "min_volatility": 30
+  },
+  "BNBUSDT": {
+    "rsi_buy": 33,
+    "rsi_sell": 67,
+    "min_volatility": 25
+  },
+  "SOLUSDT": {
+    "rsi_buy": 32,
+    "rsi_sell": 68,
+    "min_volatility": 40
+  },
+  "XRPUSDT": {
+    "rsi_buy": 34,
+    "rsi_sell": 66,
+    "min_volatility": 20
+  }
+}

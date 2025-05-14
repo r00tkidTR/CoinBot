@@ -1,0 +1,10 @@
+[
+  {
+    "symbol": "BTCUSDT",
+    "side": "LONG",
+    "entry_price": 62700.0,
+    "quantity": 0.002,
+    "tp": 65835.0,
+    "sl": 61446.0
+  }
+]
