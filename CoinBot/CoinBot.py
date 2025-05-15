@@ -64,7 +64,7 @@ def send_telegram(msg):
 send_telegram("Bot başlatıldı")
 
 # === Teknik Analiz Fonksiyonları ===
-def get_rsi(client, symbol, interval='15m', period=14):
+def get_rsi(client, symbol, interval='5m', period=14):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period + 1)
     closes = [float(kline[4]) for kline in klines]
     deltas = pd.Series(closes).diff()
@@ -74,14 +74,14 @@ def get_rsi(client, symbol, interval='15m', period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-def get_volatility(symbol, interval='15m', period=20):
+def get_volatility(symbol, interval='5m', period=20):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period)
     closes = [float(kline[4]) for kline in klines]
     volatility = np.std(closes)
     return volatility
 
 def get_technical_signals(symbol):
-    df = pd.DataFrame(client.get_klines(symbol=symbol, interval='15m', limit=100))
+    df = pd.DataFrame(client.get_klines(symbol=symbol, interval='5m', limit=100))
     df = df[[0, 1, 2, 3, 4, 5]]
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df['close'] = df['close'].astype(float)
@@ -240,6 +240,8 @@ def job():
                 if "entry_price" not in symbol_config.get(symbol, {}):
                     open_position(symbol, decision)
         except Exception as e:
+            error_message = f"⚠ Hata oluştu! {symbol} için işlem yapılamadı.\n\nHata: {str(e)}"
+            send_telegram(error_message)
             log_json({"event": "error", "symbol": symbol, "error": str(e)})
             traceback.print_exc()
 
@@ -256,6 +258,8 @@ def live_price_monitor():
                 if pnl_pct <= -2 or pnl_pct >= 5:
                     close_position(symbol)
         except Exception as e:
+            error_message = f"⚠ Canlı fiyat takip hatası! Hata mesajı:\n{traceback.format_exc()}"
+            send_telegram(error_message)
             log_json({"event": "live_monitor_error", "error": str(e)})
             traceback.print_exc()
         time.sleep(5)
@@ -277,7 +281,7 @@ def daily_report():
 # === Başlat ===
 schedule.every(5).minutes.do(job)
 schedule.every().day.at("23:59").do(daily_report)
-#schedule.every().hour.at(":08").do(hourly_summary)
+schedule.every().hour.at(":08").do(hourly_summary)
 
 monitor_thread = threading.Thread(target=live_price_monitor, daemon=True)
 monitor_thread.start()
