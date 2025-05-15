@@ -3,6 +3,9 @@ import requests
 import pandas as pd
 import joblib
 import json
+import atexit
+import signal
+import sys
 from binance.client import Client
 from binance.enums import *
 from telegram import Bot
@@ -27,6 +30,26 @@ RISK_LIMIT_PER_SYMBOL = 100  # Maksimum risk USDT cinsinden
 client = Client(BINANCE_API_KEY, BINANCE_SECRET)
 bot = Bot(token=TELEGRAM_TOKEN)
 
+position_data = {}
+long_count = 0
+short_count = 0
+
+# === Programdan çıkarken Telegram'a mesaj gönder ===
+def notify_exit():
+    try:
+        send_telegram("🚨 Bot kapatıldı veya sonlandırıldı.")
+    except:
+        pass
+
+atexit.register(notify_exit)
+
+# CTRL+C (SIGINT) veya kill (SIGTERM) gibi sinyallerde çalışır
+def handle_signal(sig, frame):
+    notify_exit()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
 
 # === JSON Logla ===
 def log_json(data, filename="log.json"):
@@ -34,7 +57,13 @@ def log_json(data, filename="log.json"):
     with open(filename, "a", encoding="utf-8") as f:
         f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
-# === RSI Hesapla ===
+# === Telegram Bildir ===
+def send_telegram(msg):
+    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
+
+send_telegram("Bot başlatıldı")
+
+# === Teknik Analiz Fonksiyonları ===
 def get_rsi(client, symbol, interval='15m', period=14):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period + 1)
     closes = [float(kline[4]) for kline in klines]
@@ -45,14 +74,12 @@ def get_rsi(client, symbol, interval='15m', period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-# === Volatilite Hesapla ===
 def get_volatility(symbol, interval='15m', period=20):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period)
     closes = [float(kline[4]) for kline in klines]
     volatility = np.std(closes)
     return volatility
 
-# === Teknik Sinyaller: MACD, EMA, Bollinger ===
 def get_technical_signals(symbol):
     df = pd.DataFrame(client.get_klines(symbol=symbol, interval='15m', limit=100))
     df = df[[0, 1, 2, 3, 4, 5]]
@@ -65,15 +92,6 @@ def get_technical_signals(symbol):
     df['Upper'] = df['close'].rolling(window=20).mean() + 2 * df['close'].rolling(window=20).std()
     df['Lower'] = df['close'].rolling(window=20).mean() - 2 * df['close'].rolling(window=20).std()
     return df.iloc[-1]
-
-# === Telegram Bildir ===
-def send_telegram(msg):
-    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
-
-# === İşlem Aç/Kapat ===
-position_data = {}
-
-
 
 # === Yardımcı Fonksiyonlar ===
 def update_symbol_config(symbol, key, value):
@@ -89,6 +107,7 @@ def remove_symbol_config_key(symbol, key):
 
 # === Karar Ver ===
 def rsi_decision(symbol):
+    global long_count, short_count
     rsi = get_rsi(client, symbol)
     volatility = get_volatility(symbol)
     tech = get_technical_signals(symbol)
@@ -109,8 +128,12 @@ def rsi_decision(symbol):
         final_decision = "PASS"
     elif rsi < rsi_buy and macd_signal == "LONG":
         final_decision = "LONG"
+        long_count += 1
+        send_telegram(f"{symbol} için Long pozisyon")
     elif rsi > rsi_sell and macd_signal == "SHORT":
         final_decision = "SHORT"
+        short_count += 1
+        send_telegram(f"{symbol} için Short pozisyon")
 
     log_json({
         "event": "decision",
@@ -123,6 +146,33 @@ def rsi_decision(symbol):
     })
 
     return final_decision
+
+# === Saatlik Rapor ===
+def hourly_summary():
+    global long_count, short_count
+    send_telegram(f"⏰ Saatlik Özet:\nLong pozisyon: {long_count}\nShort pozisyon: {short_count}")
+    long_count = 0
+    short_count = 0
+
+# === JSON'dan Coin ve Parametreleri Yükle ===
+def load_symbol_config(path="symbol_config.json"):
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        raise FileNotFoundError(f"'{path}' bulunamadı.")
+
+def get_futures_symbols():
+    exchange_info = client.futures_exchange_info()
+    return [s["symbol"] for s in exchange_info["symbols"] if s["contractType"] == "PERPETUAL" and s["status"] == "TRADING"]
+
+futures_symbols = set(get_futures_symbols())
+symbol_config = load_symbol_config()
+symbol_list = [s for s in symbol_config.keys() if s in futures_symbols]
+
+for symbol in symbol_list:
+    if symbol not in symbol_config:
+        symbol_config[symbol] = {}
 
 # === USDT Bakiyesi Al ===
 def get_usdt_balance():
@@ -181,22 +231,6 @@ def close_position(symbol):
     del position_data[symbol]
     remove_symbol_config_key(symbol, "entry_price")
 
-# === JSON'dan Coin ve Parametreleri Yükle ===
-def load_symbol_config(path="symbol_config.json"):
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    else:
-        raise FileNotFoundError(f"'{path}' bulunamadı.")
-
-def get_futures_symbols():
-    exchange_info = client.futures_exchange_info()
-    return [s["symbol"] for s in exchange_info["symbols"] if s["contractType"] == "PERPETUAL" and s["status"] == "TRADING"]
-
-futures_symbols = set(get_futures_symbols())
-symbol_config = load_symbol_config()
-symbol_list = [s for s in symbol_config.keys() if s in futures_symbols]
-
 # === Ana Döngü ===
 def job():
     for symbol in symbol_list:
@@ -221,7 +255,6 @@ def live_price_monitor():
 
                 if pnl_pct <= -2 or pnl_pct >= 5:
                     close_position(symbol)
-
         except Exception as e:
             log_json({"event": "live_monitor_error", "error": str(e)})
             traceback.print_exc()
@@ -242,8 +275,9 @@ def daily_report():
     send_telegram(f"Günlük kar/zarar özeti: {round(total_pnl, 2)} USDT")
 
 # === Başlat ===
-schedule.every(15).minutes.do(job)
+schedule.every(5).minutes.do(job)
 schedule.every().day.at("23:59").do(daily_report)
+#schedule.every().hour.at(":08").do(hourly_summary)
 
 monitor_thread = threading.Thread(target=live_price_monitor, daemon=True)
 monitor_thread.start()
@@ -251,3 +285,4 @@ monitor_thread.start()
 while True:
     schedule.run_pending()
     time.sleep(1)
+
