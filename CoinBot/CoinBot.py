@@ -1,4 +1,5 @@
 ﻿# main.py
+from pkgutil import get_loader
 import requests
 import pandas as pd
 import joblib
@@ -33,6 +34,7 @@ bot = Bot(token=TELEGRAM_TOKEN)
 position_data = {}
 long_count = 0
 short_count = 0
+max_trade = 0
 
 # === Programdan çıkarken Telegram'a mesaj gönder ===
 def notify_exit():
@@ -61,7 +63,7 @@ def log_json(data, filename="log.json"):
 def send_telegram(msg):
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-send_telegram("Bot başlatıldı")
+#send_telegram("Bot başlatıldı")
 
 # === Teknik Analiz Fonksiyonları ===
 def get_rsi(client, symbol, interval='5m', period=14):
@@ -149,8 +151,9 @@ def rsi_decision(symbol):
 
 # === Saatlik Rapor ===
 def hourly_summary():
-    global long_count, short_count
-    send_telegram(f"⏰ Saatlik Özet:\nLong pozisyon: {long_count}\nShort pozisyon: {short_count}")
+    global long_count, short_count, max_trade
+    balance = get_usdt_balance()
+    send_telegram(f"⏰ Saatlik Özet:\nLong pozisyon: {long_count}\nShort pozisyon: {short_count}\n Bakiye:{balance}\n Toplam Açık Trade:{max_trade}")
     long_count = 0
     short_count = 0
 
@@ -184,8 +187,14 @@ def get_usdt_balance():
 
 # === İşlem Aç ===
 def open_position(symbol, side):
+    global max_trade
+  
     balance = get_usdt_balance()
-    qty = round((balance * 0.2), 2)
+
+    leverage = 5
+    client.futures_change_leverage(symbol=symbol, leverage=leverage)
+
+    qty = round((balance * 0.2) * leverage, 2)
     price = float(client.futures_symbol_ticker(symbol=symbol)['price'])
     quantity = round(qty / price, 3)
     order = client.futures_create_order(
@@ -200,10 +209,12 @@ def open_position(symbol, side):
         "quantity": quantity
     }
     update_symbol_config(symbol, "entry_price", price)
+    max_trade += 1
     send_telegram(f"{symbol} için {side} pozisyon açıldı: {quantity} adet @ {price}")
 
 # === İşlem Kapat ===
 def close_position(symbol):
+    global max_trade
     if symbol not in position_data:
         return
     info = position_data[symbol]
@@ -229,10 +240,12 @@ def close_position(symbol):
         "message": message
     })
     del position_data[symbol]
+    max_trade -= 1
     remove_symbol_config_key(symbol, "entry_price")
 
 # === Ana Döngü ===
 def job():
+   if max_trade < 4:
     for symbol in symbol_list:
         try:
             decision = rsi_decision(symbol)
@@ -244,6 +257,7 @@ def job():
             send_telegram(error_message)
             log_json({"event": "error", "symbol": symbol, "error": str(e)})
             traceback.print_exc()
+
 
 # === Canlı Takip Thread ===
 def live_price_monitor():
@@ -281,7 +295,7 @@ def daily_report():
 # === Başlat ===
 schedule.every(5).minutes.do(job)
 schedule.every().day.at("23:59").do(daily_report)
-schedule.every().hour.at(":08").do(hourly_summary)
+schedule.every().hour.at(":15").do(hourly_summary)
 
 monitor_thread = threading.Thread(target=live_price_monitor, daemon=True)
 monitor_thread.start()
