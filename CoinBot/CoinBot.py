@@ -63,7 +63,7 @@ def log_json(data, filename="log.json"):
 def send_telegram(msg):
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-#send_telegram("Bot başlatıldı")
+send_telegram("Bot başlatıldı")
 
 # === Teknik Analiz Fonksiyonları ===
 def get_rsi(client, symbol, interval='5m', period=14):

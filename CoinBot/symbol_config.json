@@ -1,272 +1,272 @@
 {
   "BTCUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ETHUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "XRPUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "SOLUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "AVAXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "LINKUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "DOGEUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "MATICUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "DOTUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ATOMUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "NEARUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "APTUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ARBUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "PEPEUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "FLOKIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "JASMYUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "OPUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "RNDRUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "INJUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "STXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "GRTUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "IMXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "SEIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "SUIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "LDOUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "THETAUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "TRXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "BCHUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "FILUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ADAUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "UNIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ETCUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "AAVEUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "MKRUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "CRVUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "COMPUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ALGOUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "SANDUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "GALAUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "COTIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "DYDXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "YFIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "LTCUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ORDIUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "TWTUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "JOEUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "NKNUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "AGIXUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "XLMUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "ENSUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "RUNEUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "FTMUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "WLDUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   },
   "PYTHUSDT": {
-    "rsi_buy": 35,
-    "rsi_sell": 65,
+    "rsi_buy": 38,
+    "rsi_sell": 63,
     "min_volatility": 3
   }
 }
