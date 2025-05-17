@@ -194,7 +194,7 @@ def open_position(symbol, side):
     leverage = 5
     client.futures_change_leverage(symbol=symbol, leverage=leverage)
 
-    qty = round((balance * 0.2) * leverage, 2)
+    qty = round((balance * 0.2), 2)
     price = float(client.futures_symbol_ticker(symbol=symbol)['price'])
     quantity = round(qty / price, 3)
     order = client.futures_create_order(
