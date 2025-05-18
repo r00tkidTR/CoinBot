@@ -76,13 +76,13 @@ def get_rsi(client, symbol, interval='5m', period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-def get_volatility(symbol, interval='5m', period=20):
+def get_volatility(client, symbol, interval='5m', period=20):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period)
     closes = [float(kline[4]) for kline in klines]
     volatility = np.std(closes)
     return volatility
 
-def get_technical_signals(symbol):
+def get_technical_signals(client, symbol):
     df = pd.DataFrame(client.get_klines(symbol=symbol, interval='5m', limit=100))
     df = df[[0, 1, 2, 3, 4, 5]]
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
@@ -98,7 +98,6 @@ def get_technical_signals(symbol):
     df['Upper'] = df['close'].rolling(window=20).mean() + 2 * df['close'].rolling(window=20).std()
     df['Lower'] = df['close'].rolling(window=20).mean() - 2 * df['close'].rolling(window=20).std()
 
-    # Ek göstergeler
     df['stoch_rsi'] = ((df['close'] - df['close'].rolling(14).min()) / (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
     df['adx'] = abs((df['high'] - df['low']).rolling(14).mean()) / df['close'].rolling(14).mean() * 100
     df['volume_avg'] = df['volume'].rolling(window=20).mean()
@@ -122,8 +121,8 @@ def rsi_decision(symbol):
     global long_count, short_count
 
     rsi = get_rsi(client, symbol)
-    volatility = get_volatility(symbol)
-    tech = get_technical_signals(symbol)
+    volatility = get_volatility(client, symbol)
+    tech = get_technical_signals(client, symbol)
 
     macd_signal = ""
     if tech['MACD'] > tech['Signal']:
@@ -144,30 +143,49 @@ def rsi_decision(symbol):
     volume_avg = tech['volume_avg']
 
     final_decision = "PASS"
+    score = 0
 
-    if (
-        rsi < rsi_buy and
-        macd_signal == "LONG" and
-        close_price > ema50 and
-        volatility > min_vol and
-        stoch_rsi < 20 and
-        adx > 20 and
-        volume > volume_avg
-    ):
+    if rsi < rsi_buy:
+        score += 1
+    if macd_signal == "LONG":
+        score += 1
+    if close_price > ema50:
+        score += 1
+    if volatility > min_vol:
+        score += 1
+    if stoch_rsi < 20:
+        score += 1
+    if adx > 20:
+        score += 1
+    if volume > volume_avg:
+        score += 1
+
+    if score >= 5:
         final_decision = "LONG"
         long_count += 1
 
-    elif (
-        rsi > rsi_sell and
-        macd_signal == "SHORT" and
-        close_price < ema50 and
-        volatility > min_vol and
-        stoch_rsi > 80 and
-        adx > 20 and
-        volume > volume_avg
-    ):
+    score = 0
+    if rsi > rsi_sell:
+        score += 1
+    if macd_signal == "SHORT":
+        score += 1
+    if close_price < ema50:
+        score += 1
+    if volatility > min_vol:
+        score += 1
+    if stoch_rsi > 80:
+        score += 1
+    if adx > 20:
+        score += 1
+    if volume > volume_avg:
+        score += 1
+
+    if score >= 5:
         final_decision = "SHORT"
         short_count += 1
+
+    send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
+    send_telegram(f"Decision: {final_decision}")
 
     return final_decision
 
