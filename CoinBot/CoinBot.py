@@ -1,6 +1,5 @@
 ﻿# main.py
 from pkgutil import get_loader
-from turtle import position
 import requests
 import pandas as pd
 import joblib
