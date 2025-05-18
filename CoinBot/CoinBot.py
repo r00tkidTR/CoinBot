@@ -1,5 +1,6 @@
 ﻿# main.py
 from pkgutil import get_loader
+from turtle import position
 import requests
 import pandas as pd
 import joblib
@@ -87,12 +88,22 @@ def get_technical_signals(symbol):
     df = df[[0, 1, 2, 3, 4, 5]]
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df['close'] = df['close'].astype(float)
+    df['high'] = df['high'].astype(float)
+    df['low'] = df['low'].astype(float)
+    df['volume'] = df['volume'].astype(float)
+
     df['EMA20'] = df['close'].ewm(span=20).mean()
     df['EMA50'] = df['close'].ewm(span=50).mean()
     df['MACD'] = df['close'].ewm(span=12).mean() - df['close'].ewm(span=26).mean()
     df['Signal'] = df['MACD'].ewm(span=9).mean()
     df['Upper'] = df['close'].rolling(window=20).mean() + 2 * df['close'].rolling(window=20).std()
     df['Lower'] = df['close'].rolling(window=20).mean() - 2 * df['close'].rolling(window=20).std()
+
+    # Ek göstergeler
+    df['stoch_rsi'] = ((df['close'] - df['close'].rolling(14).min()) / (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
+    df['adx'] = abs((df['high'] - df['low']).rolling(14).mean()) / df['close'].rolling(14).mean() * 100
+    df['volume_avg'] = df['volume'].rolling(window=20).mean()
+
     return df.iloc[-1]
 
 # === Yardımcı Fonksiyonlar ===
@@ -110,42 +121,54 @@ def remove_symbol_config_key(symbol, key):
 # === Karar Ver ===
 def rsi_decision(symbol):
     global long_count, short_count
+
     rsi = get_rsi(client, symbol)
     volatility = get_volatility(symbol)
     tech = get_technical_signals(symbol)
-    macd_signal = ""
 
+    macd_signal = ""
     if tech['MACD'] > tech['Signal']:
         macd_signal = "LONG"
     elif tech['MACD'] < tech['Signal']:
         macd_signal = "SHORT"
 
-    final_decision = "PASS"
     config = symbol_config.get(symbol, {})
     rsi_buy = config.get("rsi_buy", 35)
     rsi_sell = config.get("rsi_sell", 65)
-    min_vol = config.get("min_volatility", 0)
+    min_vol = config.get("min_volatility", 0.5)
 
-    if volatility < min_vol:
-        final_decision = "PASS"
-    elif rsi < rsi_buy and macd_signal == "LONG":
+    close_price = tech['close']
+    ema50 = tech['EMA50']
+    stoch_rsi = tech['stoch_rsi']
+    adx = tech['adx']
+    volume = tech['volume']
+    volume_avg = tech['volume_avg']
+
+    final_decision = "PASS"
+
+    if (
+        rsi < rsi_buy and
+        macd_signal == "LONG" and
+        close_price > ema50 and
+        volatility > min_vol and
+        stoch_rsi < 20 and
+        adx > 20 and
+        volume > volume_avg
+    ):
         final_decision = "LONG"
         long_count += 1
-        send_telegram(f"{symbol} için Long pozisyon")
-    elif rsi > rsi_sell and macd_signal == "SHORT":
+
+    elif (
+        rsi > rsi_sell and
+        macd_signal == "SHORT" and
+        close_price < ema50 and
+        volatility > min_vol and
+        stoch_rsi > 80 and
+        adx > 20 and
+        volume > volume_avg
+    ):
         final_decision = "SHORT"
         short_count += 1
-        send_telegram(f"{symbol} için Short pozisyon")
-
-    log_json({
-        "event": "decision",
-        "symbol": symbol,
-        "rsi": rsi,
-        "volatility": volatility,
-        "macd": tech['MACD'],
-        "macd_signal": tech['Signal'],
-        "final_decision": final_decision
-    })
 
     return final_decision
 
@@ -193,8 +216,12 @@ def open_position(symbol, side):
 
     leverage = 5
     client.futures_change_leverage(symbol=symbol, leverage=leverage)
+    client.futures_change_position_mode(symbol=symbol,position="Isolated")
+    if balance >= 100:
+        qty = round(balance * 0.3, 2)
+    else:
+        qty = max(7)
 
-    qty = round(balance, 2)
     price = float(client.futures_symbol_ticker(symbol=symbol)['price'])
     quantity = round(qty / price, 3)
     order = client.futures_create_order(
