@@ -163,6 +163,8 @@ def rsi_decision(symbol):
     if score >= 5:
         final_decision = "LONG"
         long_count += 1
+        send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
+        send_telegram(f"Decision: {final_decision}")
 
     score = 0
     if rsi > rsi_sell:
@@ -183,9 +185,9 @@ def rsi_decision(symbol):
     if score >= 5:
         final_decision = "SHORT"
         short_count += 1
+        send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
+        send_telegram(f"Decision: {final_decision}")
 
-    send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
-    send_telegram(f"Decision: {final_decision}")
 
     return final_decision
 
