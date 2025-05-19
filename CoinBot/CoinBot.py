@@ -2,7 +2,7 @@
 from pkgutil import get_loader
 import requests
 import pandas as pd
-import pandas_ta as ta
+from finta import TA
 import joblib
 import json
 import atexit
@@ -84,33 +84,35 @@ def get_volatility(client, symbol, interval='5m', period=20):
     return volatility
 
 def get_technical_signals(client, symbol):
+    # Binance verisini al
     df = pd.DataFrame(client.get_klines(symbol=symbol, interval='5m', limit=100))
-    df = df[[0, 1, 2, 3, 4, 5]]
+    df = df[[0, 1, 2, 3, 4, 5]]  # timestamp, open, high, low, close, volume
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
 
-    # Sayısal dönüşümler
-    df['close'] = df['close'].astype(float)
-    df['high'] = df['high'].astype(float)
-    df['low'] = df['low'].astype(float)
-    df['volume'] = df['volume'].astype(float)
+    # Tür dönüşümleri
+    df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
 
-    # EMA ve MACD hesaplamaları
-    df['EMA50'] = df['close'].ewm(span=50).mean()
-    df['MACD'] = df['close'].ewm(span=12).mean() - df['close'].ewm(span=26).mean()
-    df['Signal'] = df['MACD'].ewm(span=9).mean()
+    # Teknik göstergeler
+    df['EMA50'] = TA.EMA(df, 50)
+    macd = TA.MACD(df)
+    df['MACD'] = macd['MACD']
+    df['Signal'] = macd['SIGNAL']
+    df['RSI'] = TA.RSI(df)
+    df['ADX'] = TA.ADX(df)
 
-    # Stoch RSI (0–100)
-    df['stoch_rsi'] = ((df['close'] - df['close'].rolling(14).min()) / 
-                       (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
+    # Stochastic RSI manuel hesaplanır
+    close = df['close']
+    lowest_low = close.rolling(window=14).min()
+    highest_high = close.rolling(window=14).max()
+    df['stoch_rsi'] = ((close - lowest_low) / (highest_high - lowest_low)) * 100
 
-    # ADX: pandas-ta üzerinden alınır (DataFrame.ta.adx)
-    adx_df = df.ta.adx(length=14)
-    df['adx'] = adx_df['ADX_14']
+    # Volatility hesaplama: Standart sapma
+    df['volatility'] = df['close'].rolling(window=20).std()
 
-    # Ortalama hacim
+    # Hacim ortalaması
     df['volume_avg'] = df['volume'].rolling(window=20).mean()
 
-    # Son satırı döndür
+    # Son satırı döndür (en güncel veriler)
     return df.iloc[-1]
 
 # === Yardımcı Fonksiyonlar ===
