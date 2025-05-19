@@ -2,6 +2,7 @@
 from pkgutil import get_loader
 import requests
 import pandas as pd
+import pandas_ta as ta
 import joblib
 import json
 import atexit
@@ -87,26 +88,29 @@ def get_technical_signals(client, symbol):
     df = df[[0, 1, 2, 3, 4, 5]]
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
 
+    # Sayısal dönüşümler
     df['close'] = df['close'].astype(float)
     df['high'] = df['high'].astype(float)
     df['low'] = df['low'].astype(float)
     df['volume'] = df['volume'].astype(float)
 
+    # EMA ve MACD hesaplamaları
     df['EMA50'] = df['close'].ewm(span=50).mean()
     df['MACD'] = df['close'].ewm(span=12).mean() - df['close'].ewm(span=26).mean()
     df['Signal'] = df['MACD'].ewm(span=9).mean()
 
-    # Stoch RSI (0–100 ölçeğinde)
-    stoch_rsi = ((df['close'] - df['close'].rolling(14).min()) / 
-                 (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
-    df['stoch_rsi'] = stoch_rsi
+    # Stoch RSI (0–100)
+    df['stoch_rsi'] = ((df['close'] - df['close'].rolling(14).min()) / 
+                       (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
 
-    # ADX
-    adx = ta.adx(df['high'], df['low'], df['close'])
-    df['adx'] = adx['ADX_14']
+    # ADX: pandas-ta üzerinden alınır (DataFrame.ta.adx)
+    adx_df = df.ta.adx(length=14)
+    df['adx'] = adx_df['ADX_14']
 
+    # Ortalama hacim
     df['volume_avg'] = df['volume'].rolling(window=20).mean()
 
+    # Son satırı döndür
     return df.iloc[-1]
 
 # === Yardımcı Fonksiyonlar ===
