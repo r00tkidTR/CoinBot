@@ -63,7 +63,7 @@ def log_json(data, filename="log.json"):
 def send_telegram(msg):
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=msg)
 
-#send_telegram("Bot başlatıldı")
+send_telegram("Bot başlatıldı")
 
 # === Teknik Analiz Fonksiyonları ===
 def get_rsi(client, symbol, interval='5m', period=14):
@@ -76,23 +76,32 @@ def get_rsi(client, symbol, interval='5m', period=14):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-def get_volatility(symbol, interval='5m', period=20):
+def get_volatility(client, symbol, interval='5m', period=20):
     klines = client.get_klines(symbol=symbol, interval=interval, limit=period)
     closes = [float(kline[4]) for kline in klines]
     volatility = np.std(closes)
     return volatility
 
-def get_technical_signals(symbol):
+def get_technical_signals(client, symbol):
     df = pd.DataFrame(client.get_klines(symbol=symbol, interval='5m', limit=100))
     df = df[[0, 1, 2, 3, 4, 5]]
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df['close'] = df['close'].astype(float)
+    df['high'] = df['high'].astype(float)
+    df['low'] = df['low'].astype(float)
+    df['volume'] = df['volume'].astype(float)
+
     df['EMA20'] = df['close'].ewm(span=20).mean()
     df['EMA50'] = df['close'].ewm(span=50).mean()
     df['MACD'] = df['close'].ewm(span=12).mean() - df['close'].ewm(span=26).mean()
     df['Signal'] = df['MACD'].ewm(span=9).mean()
     df['Upper'] = df['close'].rolling(window=20).mean() + 2 * df['close'].rolling(window=20).std()
     df['Lower'] = df['close'].rolling(window=20).mean() - 2 * df['close'].rolling(window=20).std()
+
+    df['stoch_rsi'] = ((df['close'] - df['close'].rolling(14).min()) / (df['close'].rolling(14).max() - df['close'].rolling(14).min())) * 100
+    df['adx'] = abs((df['high'] - df['low']).rolling(14).mean()) / df['close'].rolling(14).mean() * 100
+    df['volume_avg'] = df['volume'].rolling(window=20).mean()
+
     return df.iloc[-1]
 
 # === Yardımcı Fonksiyonlar ===
@@ -110,42 +119,75 @@ def remove_symbol_config_key(symbol, key):
 # === Karar Ver ===
 def rsi_decision(symbol):
     global long_count, short_count
-    rsi = get_rsi(client, symbol)
-    volatility = get_volatility(symbol)
-    tech = get_technical_signals(symbol)
-    macd_signal = ""
 
+    rsi = get_rsi(client, symbol)
+    volatility = get_volatility(client, symbol)
+    tech = get_technical_signals(client, symbol)
+
+    macd_signal = ""
     if tech['MACD'] > tech['Signal']:
         macd_signal = "LONG"
     elif tech['MACD'] < tech['Signal']:
         macd_signal = "SHORT"
 
-    final_decision = "PASS"
     config = symbol_config.get(symbol, {})
     rsi_buy = config.get("rsi_buy", 35)
     rsi_sell = config.get("rsi_sell", 65)
-    min_vol = config.get("min_volatility", 0)
+    min_vol = config.get("min_volatility", 0.5)
 
-    if volatility < min_vol:
-        final_decision = "PASS"
-    elif rsi < rsi_buy and macd_signal == "LONG":
+    close_price = tech['close']
+    ema50 = tech['EMA50']
+    stoch_rsi = tech['stoch_rsi']
+    adx = tech['adx']
+    volume = tech['volume']
+    volume_avg = tech['volume_avg']
+
+    final_decision = "PASS"
+    score = 0
+
+    if rsi < rsi_buy:
+        score += 1
+    if macd_signal == "LONG":
+        score += 1
+    if close_price > ema50:
+        score += 1
+    if volatility > min_vol:
+        score += 1
+    if stoch_rsi < 20:
+        score += 1
+    if adx > 20:
+        score += 1
+    if volume > volume_avg:
+        score += 1
+
+    if score >= 5:
         final_decision = "LONG"
         long_count += 1
-        send_telegram(f"{symbol} için Long pozisyon")
-    elif rsi > rsi_sell and macd_signal == "SHORT":
+        send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
+        send_telegram(f"Decision: {final_decision}")
+
+    score = 0
+    if rsi > rsi_sell:
+        score += 1
+    if macd_signal == "SHORT":
+        score += 1
+    if close_price < ema50:
+        score += 1
+    if volatility > min_vol:
+        score += 1
+    if stoch_rsi > 80:
+        score += 1
+    if adx > 20:
+        score += 1
+    if volume > volume_avg:
+        score += 1
+
+    if score >= 5:
         final_decision = "SHORT"
         short_count += 1
-        send_telegram(f"{symbol} için Short pozisyon")
+        send_telegram(f"[{symbol}] RSI: {rsi:.2f}, MACD: {tech['MACD']:.2f}, Signal: {tech['Signal']:.2f}, StochRSI: {stoch_rsi:.2f}, ADX: {adx:.2f}, Vol: {volatility:.2f}, Volume: {volume:.2f}, VolumeAvg: {volume_avg:.2f}")
+        send_telegram(f"Decision: {final_decision}")
 
-    log_json({
-        "event": "decision",
-        "symbol": symbol,
-        "rsi": rsi,
-        "volatility": volatility,
-        "macd": tech['MACD'],
-        "macd_signal": tech['Signal'],
-        "final_decision": final_decision
-    })
 
     return final_decision
 
@@ -193,8 +235,12 @@ def open_position(symbol, side):
 
     leverage = 5
     client.futures_change_leverage(symbol=symbol, leverage=leverage)
+    client.futures_change_margin_type(symbol=symbol, marginType='ISOLATED')
+    if balance >= 100:
+        qty = round(balance * 0.3, 2)
+    else:
+        qty = 7
 
-    qty = round((balance * 0.2) * leverage, 2)
     price = float(client.futures_symbol_ticker(symbol=symbol)['price'])
     quantity = round(qty / price, 3)
     order = client.futures_create_order(
@@ -295,7 +341,7 @@ def daily_report():
 # === Başlat ===
 schedule.every(5).minutes.do(job)
 schedule.every().day.at("23:59").do(daily_report)
-schedule.every().hour.at(":08").do(hourly_summary)
+schedule.every().hour.at(":15").do(hourly_summary)
 
 monitor_thread = threading.Thread(target=live_price_monitor, daemon=True)
 monitor_thread.start()
