@@ -239,7 +239,7 @@ def open_position(symbol, side):
     if balance >= 100:
         qty = round(balance * 0.3, 2)
     else:
-        qty = max(7)
+        qty = 7
 
     price = float(client.futures_symbol_ticker(symbol=symbol)['price'])
     quantity = round(qty / price, 3)
