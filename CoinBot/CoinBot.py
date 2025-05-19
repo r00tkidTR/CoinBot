@@ -235,7 +235,6 @@ def open_position(symbol, side):
 
     leverage = 5
     client.futures_change_leverage(symbol=symbol, leverage=leverage)
-    client.futures_change_margin_type(symbol=symbol, marginType='ISOLATED')
     if balance >= 100:
         qty = round(balance * 0.3, 2)
     else:
